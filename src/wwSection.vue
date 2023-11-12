@@ -1,134 +1,131 @@
 <template>
+  <draggable v-model="modalPosition" :options="draggableOptions">
     <div
-        class="modal-container"
-        :style="backdropStyle"
-        ww-responsive="modal-container"
-        @mousedown.self="$emit('trigger-event', { name: 'backdropClick' })"
+      class="modal-container"
+      :style="backdropStyle"
+      ww-responsive="modal-container"
+      @mousedown.self="$emit('trigger-event', { name: 'backdropClick' })"
     >
-        <transition :name="content.animation" mode="out-in">
-            <wwLayout
-                v-if="show"
-                class="modal-dropzone"
-                direction="column"
-                path="modalContent"
-                :class="content.position"
-                :style="modalContentStyle"
-                ww-responsive="modal-dropzone"
-                :inherit-from-element="['width']"
-            ></wwLayout>
-        </transition>
+      <transition :name="content.animation" mode="out-in">
+        <wwLayout
+          v-if="show"
+          class="modal-dropzone"
+          direction="column"
+          path="modalContent"
+          :class="content.position"
+          :style="modalContentStyle"
+          ww-responsive="modal-dropzone"
+          :inherit-from-element="['width']"
+        ></wwLayout>
+      </transition>
     </div>
+  </draggable>
 </template>
 
 <script>
-import { presets } from "./settings.js";
+import { ref } from 'vue';
+import { presets } from './settings.js';
+import draggable from 'vuedraggable';
 
 export default {
-    props: {
-        content: { type: Object, required: true },
-        /* wwEditor:start */
-        wwEditorState: { type: Object, required: true },
-        /* wwEditor:end */
-    },
-    emits: ["trigger-event", "update:sidepanel-content"],
-    computed: {
-        isEditing() {
-            /* wwEditor:start */
-            return this.wwEditorState.editMode === wwLib.wwEditorHelper.EDIT_MODES.EDITION;
-            /* wwEditor:end */
-            return false;
-        },
-        show() {
-            /* wwEditor:start */
-            return this.content.display || (this.wwEditorState.sidepanelContent.displayInEditor && this.isEditing);
-            /* wwEditor:end */
-            return this.content.display;
-        },
-        backdropStyle() {
-            if (this.show && this.content.backdrop) {
-                return {
-                    "--backdropColor": this.content.backdropColor,
-                    "--backdropEvents": "auto",
-                    zIndex: this.content.zIndex,
-                };
-            }
+  components: {
+    draggable,
+  },
+  props: {
+    content: { type: Object, required: true },
+  },
+  emits: ['trigger-event', 'update:sidepanel-content'],
+  setup() {
+    const modalPosition = ref({ left: 0, top: 0 });
 
-            return {
-                "--backdropColor": "transparent",
-                "--backdropEvents": "none",
-                zIndex: this.content.zIndex,
-            };
-        },
-        modalContentStyle() {
-            const baseStyle = {
-                "--transition": this.content.transition,
-            };
-
-            if (this.content.position !== "custom") {
-                return {
-                    ...baseStyle,
-                    ...presets[this.content.position],
-                };
-            }
-
-            return {
-                ...baseStyle,
-                "--top": this.content.positionTop,
-                "--left": this.content.positionLeft,
-            };
-        },
+    return {
+      modalPosition,
+    };
+  },
+  computed: {
+    show() {
+      return this.content.display;
     },
-    watch: {
-        /* wwEditor:start */
-        "wwEditorState.boundProps.display"(isBind, wasBind) {
-            if (wasBind && !isBind)
-                this.$emit("update:sidepanel-content", {
-                    path: "displayInEditor",
-                    value: false,
-                });
-        },
-        /* wwEditor:end */
+    backdropStyle() {
+      if (this.show && this.content.backdrop) {
+        return {
+          '--backdropColor': this.content.backdropColor,
+          '--backdropEvents': 'auto',
+          zIndex: this.content.zIndex,
+        };
+      }
+
+      return {
+        '--backdropColor': 'transparent',
+        '--backdropEvents': 'none',
+        zIndex: this.content.zIndex,
+      };
     },
+    modalContentStyle() {
+      const baseStyle = {
+        '--transition': this.content.transition,
+      };
+
+      if (this.content.position !== 'custom') {
+        return {
+          ...baseStyle,
+          ...presets[this.content.position],
+        };
+      }
+
+      return {
+        ...baseStyle,
+        '--top': this.content.positionTop,
+        '--left': this.content.positionLeft,
+      };
+    },
+    draggableOptions() {
+      return {
+        preventOnFilter: false,
+        // Add any other options you need
+      };
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 :root {
-    --transition: none;
-    --backdropColor: transparent;
-    --backdropEvents: none;
-    --top: unset;
-    --left: unset;
+  --transition: none;
+  --backdropColor: transparent;
+  --backdropEvents: none;
+  --top: unset;
+  --left: unset;
 }
 
 .modal-container {
-    display: flex;
-    position: fixed;
-    top: 0;
-    height: 100vh;
-    z-index: 30;
-    transition: background-color 0.5s;
-    background-color: var(--backdropColor);
-    pointer-events: var(--backdropEvents);
+  display: flex;
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  z-index: 30;
+  transition: background-color 0.5s;
+  background-color: var(--backdropColor);
+  pointer-events: var(--backdropEvents);
 }
 
 .modal-dropzone {
-    position: absolute;
-    height: inset;
-    width: 100%;
-    height: 100%;
-    display: flex;
+  position: absolute;
+  height: inset;
+  width: 100%;
+  height: 100%;
+  display: flex;
 
-    align-items: var(--align) !important;
-    justify-content: var(--justify) !important;
+  align-items: var(--align) !important;
+  justify-content: var(--justify) !important;
 
-    top: var(--top);
-    left: var(--left);
+  top: var(--top);
+  left: var(--left);
 
-    pointer-events: none;
-    & * {
-        pointer-events: all;
-    }
+  pointer-events: none;
+  & * {
+    pointer-events: all;
+  }
 }
 
 .fade-enter-active,
@@ -145,65 +142,65 @@ export default {
 .zoomIn-leave-active,
 .zoomOut-enter-active,
 .zoomOut-leave-active {
-    transition: var(--transition);
+  transition: var(--transition);
 }
 
 .fade-enter-from,
 .fade-leave-to {
-    opacity: 0;
+  opacity: 0;
 }
 
 .fromTop-enter-from {
-    opacity: 0;
-    transform: translate(0%, -100%);
+  opacity: 0;
+  transform: translate(0%, -100%);
 }
 .fromTop-leave-to {
-    opacity: 0;
-    transform: translate(0%, -100%);
+  opacity: 0;
+  transform: translate(0%, -100%);
 }
 
 .fromRight-enter-from {
-    opacity: 0;
-    transform: translate(100%, 0%);
+  opacity: 0;
+  transform: translate(100%, 0%);
 }
 .fromRight-leave-to {
-    opacity: 0;
-    transform: translate(100%, 0%);
+  opacity: 0;
+  transform: translate(100%, 0%);
 }
 
 .fromBottom-enter-from {
-    opacity: 0;
-    transform: translate(0%, 100%);
+  opacity: 0;
+  transform: translate(0%, 100%);
 }
 .fromBottom-leave-to {
-    opacity: 0;
-    transform: translate(0%, 100%);
+  opacity: 0;
+  transform: translate(0%, 100%);
 }
 
 .fromLeft-enter-from {
-    opacity: 0;
-    transform: translate(-100%, 0%);
+  opacity: 0;
+  transform: translate(-100%, 0%);
 }
 .fromLeft-leave-to {
-    opacity: 0;
-    transform: translate(-100%, 0%);
+  opacity: 0;
+  transform: translate(-100%, 0%);
 }
 
 .zoomIn-enter-from {
-    opacity: 0;
-    transform: translate(0%, 0%) scale(1.5);
+  opacity: 0;
+  transform: translate(0%, 0%) scale(1.5);
 }
 .zoomIn-leave-to {
-    opacity: 0;
-    transform: translate(0%, 0%) scale(1.5);
+  opacity: 0;
+  transform: translate(0%, 0%) scale(1.5);
 }
 
 .zoomOut-enter-from {
-    opacity: 0;
-    transform: translate(0%, 0%) scale(0.5);
+  opacity: 0;
+  transform: translate(0%, 0%) scale(0.5);
 }
 .zoomOut-leave-to {
-    opacity: 0;
-    transform: translate(0%, 0%) scale(0.5);
+  opacity: 0;
+  transform: translate(0%, 0%) scale(0.5);
 }
 </style>
